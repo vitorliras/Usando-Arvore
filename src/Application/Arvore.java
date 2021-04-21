@@ -5,6 +5,7 @@ public class Arvore {
 	private Elemento ele;
 	private Arvore dir;
 	private Arvore esq;
+	private int bal;
 	
 	public Arvore() {
 		
@@ -13,6 +14,129 @@ public class Arvore {
 	public Arvore(Elemento ele) {
 		this.ele = ele;
 		//System.out.println("Àrvore criada com o elemento "+"("+ele.getValor()+")");
+	}
+	
+	public int calcularAltura() {
+		if(this.esq == null & this.dir == null) {
+			return 1;
+		}
+		else if (this.esq != null && this.dir == null){
+			return 1 + this.esq.calcularAltura();
+		}
+		else if (this.esq == null && this.dir != null) {
+			return 1 + this.dir.calcularAltura();		
+		}
+		else {
+			return 1 + Math.max(this.esq.calcularAltura(), this.dir.calcularAltura());
+		}
+	}
+	
+	public void calcularBalanceamento() {
+		if(this.dir == null && this.esq == null) {
+			this.bal = 0;
+		}
+		else if(this.esq == null && this.dir != null) {
+			this.bal = this.dir.calcularAltura() - 0;
+		}
+		else if(this.esq != null && this.dir == null) {
+			this.bal = 0 - this.esq.calcularAltura();
+		}
+		else {
+			this.bal = this.dir.calcularAltura() - this.esq.calcularAltura();		
+		}
+		if(this.dir != null) this.dir.calcularBalanceamento();
+		if(this.esq != null) this.esq.calcularBalanceamento();
+	}
+	
+	public Arvore verificaBalanceamento() {
+		if (this.bal >=2 || this.bal <= -2){
+            if (this.bal >= 2){
+            	if (this.bal * this.dir.getBal() > 0){
+                    System.out.println("Rotacao Simples Direita");
+                    return rotacaoSimplesDireita();
+                }
+                else{
+                    System.out.println("Rotacao Dupla Direita");
+                    return rotacaoDuplaDireita();
+                }
+            }
+            else{  
+                if (this.bal * this.esq.getBal() > 0){
+                    System.out.println("Rotacao Simples Esquerda");
+                    return rotacaoSimplesEsquerda();
+                }
+                else{
+                    System.out.println("Rotacao Dupla Esquerda");
+                    return rotacaoDuplaEsquerda();
+                }
+            }
+        }
+        this.calcularBalanceamento();
+        if (this.esq != null) this.esq = this.esq.verificaBalanceamento();
+        if (this.dir != null) this.dir = this.dir.verificaBalanceamento();
+        return this;
+    }
+	
+	public Arvore rotacaoSimplesDireita() {
+		Arvore filhoDir;
+		Arvore filhoDoFilho = null;
+		
+		filhoDir = this.getDir();
+		if(this.dir != null) {
+			if(this.dir.getEsq() != null) {
+				filhoDoFilho = filhoDir.getEsq();
+			}
+		}
+		filhoDir.setEsq(this);
+		this.setDir(filhoDoFilho);
+		return filhoDir;
+	}
+	
+	public Arvore rotacaoSimplesEsquerda() {
+		Arvore filhoEsq;
+        Arvore filhoDoFilho = null;
+        filhoEsq = this.getEsq();
+        if (this.esq != null){
+            if (this.esq.getDir()!= null){
+                filhoDoFilho = filhoEsq.getDir();
+            }
+        }
+        filhoEsq.setDir(this);
+        this.setEsq(filhoDoFilho);
+        return filhoEsq;
+    }
+	
+	
+	public Arvore rotacaoDuplaDireita() {
+		Arvore arvore = this;
+		Arvore filhoDir = this.getDir();
+		Arvore filhoDoFilho = filhoDir.getEsq();
+		Arvore noInsreido = filhoDoFilho.getDir();
+		// parte 1: alinhar 
+		filhoDir.setEsq(noInsreido);
+		filhoDoFilho.setDir(filhoDir);
+		this.setDir(filhoDoFilho);
+		 // parte 2: tornar o filho à direita a nova raiz
+		Arvore novoFilhoDireita = this.getDir();
+		arvore.setDir(null);
+		novoFilhoDireita.setEsq(arvore);
+		return novoFilhoDireita;
+	}
+	
+	public Arvore rotacaoDuplaEsquerda() {
+		Arvore arvore       = this;
+        Arvore filhoDir     = this.getDir();
+        Arvore filhoDoFilho = filhoDir.getEsq();
+        Arvore noInserido   = filhoDoFilho.getDir();
+        // parte 1: alinhar 
+        filhoDir.setEsq(noInserido);
+        filhoDoFilho.setDir(filhoDir);
+        this.setDir(filhoDoFilho);
+        // parte 2: tornar o filho à esquerda a nova raiz
+        Arvore novoFilhoDireita = this.getDir();
+        arvore.setDir(null);
+        novoFilhoDireita.setEsq(arvore);
+        return novoFilhoDireita;
 	}
 	
 	public Arvore remover(Elemento elem) {
@@ -88,7 +212,7 @@ public class Arvore {
 		}
 	}
 	
-	public void inserir(Elemento novo) {
+	public Arvore inserir(Elemento novo) {
 		if(isEmpty()) {
 			this.ele = novo;
 		}else {
@@ -99,7 +223,7 @@ public class Arvore {
 					//System.out.println("Elemento "+novo.getValor()+" à esquerda de "+this.ele.getValor());
 				}
 				else {
-					this.esq.inserir(novo);
+					this.esq = this.esq.inserir(novo);
 				}
 			}
 			else if(novo.getValor() > this.ele.getValor()){
@@ -108,10 +232,11 @@ public class Arvore {
 					 //System.out.println("Elemento "+novo.getValor()+" à direita de "+this.ele.getValor());
 				 }
 				 else {
-					 this.dir.inserir(novo);
+					 this.dir = this.dir.inserir(novo);
 				 }
 			}
 		}
+		return this;
 	}
 
 	public boolean busca(int valor) {
@@ -164,6 +289,47 @@ public class Arvore {
 
 	public void setEsq(Arvore esq) {
 		this.esq = esq;
+	}
+	
+	public int getBal() {
+		return bal;
+	}
+
+	public void setBal(int bal) {
+		this.bal = bal;
+	}
+
+	
+	public String printArvore(int level) {
+		String str = this.toString()+"\n";
+		for (int i=0; i<level; i++){
+            str += "\t";
+		}
+	    if (this.esq != null){
+	        str += "+-ESQ: "+this.esq.printArvore(level + 1);
+	    }
+	    else{
+	        str += "+-ESQ: NULL";
+	    }
+	    str += "\n";
+	    for (int i=0; i<level; i++){
+	             str += "\t";
+	    }
+	    if (this.dir != null){
+	        
+	        str += "+-DIR: "+this.dir.printArvore(level + 1); 
+	    }
+	    else{
+	        str += "+-DIR: NULL";
+	    }
+	    str += "\n";
+	    return str;
+		
+	}
+
+	@Override
+	public String toString() {
+		return "["+this.ele.getValor()+"] ("+this.bal+")";
 	}
 	
 	
